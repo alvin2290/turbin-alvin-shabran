@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animasi Turbin Air</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f6ff;
+  --panel-bg:#ffffff;
+  --scene-bg:linear-gradient(160deg,#dbeeff 0%,#c7f0e8 100%);
+  --blue:#0ea5e9;
+  --teal:#0d9488;
+  --dark:#0f172a;
+  --label:#64748b;
+  --accent:#3b82f6;
+  --res-top:#38bdf8;
+  --res-body:#0ea5e9;
+  --res-dark:#0284c7;
+  --pipe:#38bdf8;
+  --pipe-dark:#0369a1;
+  --gen-bg:#1e293b;
+  --gen-border:#334155;
+  --yellow:#fbbf24;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 3rem}
+h1{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;color:var(--dark);text-align:center;margin-bottom:.4rem}
+.subtitle{color:var(--label);font-size:.95rem;text-align:center;max-width:600px;margin-bottom:2rem}
+
+.app{display:grid;grid-template-columns:320px 1fr;gap:1.5rem;width:100%;max-width:1100px}
+@media(max-width:700px){.app{grid-template-columns:1fr}}
+
+/* LEFT PANEL */
+.panel{background:var(--panel-bg);border-radius:20px;padding:1.75rem;box-shadow:0 2px 20px rgba(0,0,0,.07)}
+.field{margin-bottom:1.5rem}
+.field-label{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;color:var(--dark);margin-bottom:.6rem}
+.field-label svg{color:var(--blue)}
+.field input[type=number]{width:100%;padding:.7rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:1rem;color:var(--dark);outline:none;transition:border-color .2s}
+.field input[type=number]:focus{border-color:var(--blue)}
+.field input[type=number]::-webkit-inner-spin-button{opacity:1}
+.field.slider-field input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:6px;background:#e2e8f0;outline:none;cursor:pointer}
+.field.slider-field input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 0 0 2px var(--accent);cursor:pointer}
+.eff-row{display:flex;justify-content:flex-end;font-size:.85rem;font-weight:700;color:var(--accent);margin-top:.4rem}
+
+.result-box{background:var(--dark);border-radius:14px;padding:1.25rem 1.5rem;margin-top:.5rem}
+.result-box .rlabel{font-size:.8rem;color:#94a3b8;margin-bottom:.3rem}
+.result-box .rpower{font-size:2.4rem;font-weight:700;color:#38bdf8;line-height:1;transition:all .3s}
+.result-box .runit{font-size:.8rem;color:#64748b;margin-top:.3rem}
+.result-box .rwatt{font-size:.85rem;color:#64748b;margin-top:.2rem}
+
+.extra-info{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1rem}
+.info-chip{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:.75rem;text-align:center}
+.info-chip .iv{font-size:1rem;font-weight:700;color:var(--dark)}
+.info-chip .il{font-size:.72rem;color:var(--label);margin-top:.2rem}
+.class-badge{margin-top:.8rem;padding:.4rem 1rem;border-radius:20px;font-size:.8rem;font-weight:600;text-align:center}
+
+/* RIGHT SCENE */
+.scene{background:var(--scene-bg);border-radius:20px;padding:1.75rem;position:relative;overflow:hidden;min-height:480px;box-shadow:0 2px 20px rgba(0,0,0,.07);display:flex;flex-direction:column;justify-content:space-between}
+
+/* Clouds deco */
+.cloud{position:absolute;border-radius:50px;opacity:.35}
+.c1{width:90px;height:30px;background:#fff;top:18px;left:30px}
+.c1::before{content:'';position:absolute;width:45px;height:45px;background:#fff;border-radius:50%;top:-20px;left:15px}
+.c2{width:60px;height:22px;background:#fff;top:28px;right:50px}
+.c2::before{content:'';position:absolute;width:32px;height:32px;background:#fff;border-radius:50%;top:-14px;left:10px}
+
+.diagram{display:flex;align-items:center;justify-content:center;gap:0;position:relative;padding:1rem 0;flex:1}
+
+/* Reservoir */
+.reservoir{position:relative;width:110px;flex-shrink:0}
+.res-label{text-align:center;font-size:.7rem;font-weight:700;color:#0c4a6e;margin-bottom:.4rem;letter-spacing:.05em;text-transform:uppercase}
+.res-body{width:110px;height:130px;border-radius:12px 12px 8px 8px;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(14,165,233,.3)}
+.res-back{position:absolute;inset:0;background:#0e7490}
+.res-water{position:absolute;bottom:0;left:0;right:0;height:75%;background:linear-gradient(180deg,#38bdf8 0%,#0ea5e9 40%,#0284c7 100%);border-radius:0 0 7px 7px;transition:height .5s ease}
+/* wave on water */
+.res-wave{position:absolute;top:0;left:-50%;width:200%;height:20px;background:rgba(255,255,255,.25);border-radius:50%;animation:waveAnim 3s ease-in-out infinite}
+@keyframes waveAnim{0%,100%{transform:translateX(0) scaleY(1)}50%{transform:translateX(10%) scaleY(1.4)}}
+.res-shine{position:absolute;top:12px;left:10px;width:25px;height:80px;background:rgba(255,255,255,.15);border-radius:50%;transform:rotate(-10deg)}
+
+/* Penstock pipe (horizontal) */
+.penstock-wrap{flex:1;display:flex;align-items:center;position:relative;height:40px;margin:0 -2px}
+.pipe-outer{width:100%;height:26px;background:#0369a1;border-radius:13px;position:relative;overflow:hidden;box-shadow:inset 0 3px 6px rgba(0,0,0,.3),0 2px 8px rgba(3,105,161,.4)}
+.pipe-inner{position:absolute;top:4px;left:0;right:0;height:8px;background:rgba(255,255,255,.15);border-radius:4px}
+/* flow bubbles */
+.bubble{position:absolute;top:50%;transform:translateY(-50%);width:22px;height:10px;border-radius:10px;background:rgba(186,230,253,.5);animation:flowBubble linear infinite}
+.bubble:nth-child(1){left:0%;animation-duration:var(--spd,1.5s)}
+.bubble:nth-child(2){left:0%;animation-duration:var(--spd,1.5s);animation-delay:calc(var(--spd,1.5s)*-0.33)}
+.bubble:nth-child(3){left:0%;animation-duration:var(--spd,1.5s);animation-delay:calc(var(--spd,1.5s)*-0.66)}
+@keyframes flowBubble{from{left:-10%}to{left:110%}}
+
+/* Turbine */
+.turbine-wrap{position:relative;width:130px;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+.turb-label{font-size:.7rem;font-weight:700;color:#0c4a6e;text-align:center;margin-top:.6rem;text-transform:uppercase;letter-spacing:.05em}
+.turbine-circle{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#164e63,#0e7490,#083344);border:3px solid #0e7490;position:relative;overflow:hidden;box-shadow:0 0 0 6px rgba(14,116,144,.15),0 8px 24px rgba(8,51,68,.4)}
+/* spinning blades */
+.blades{width:100%;height:100%;position:absolute;animation:spinBlade var(--spd,3s) linear infinite}
+.blade{position:absolute;top:50%;left:50%;width:44px;height:13px;border-radius:10px;background:linear-gradient(90deg,#38bdf8,#7dd3fc);transform-origin:0 50%}
+.blade:nth-child(1){transform:translateY(-50%) rotate(0deg)}
+.blade:nth-child(2){transform:translateY(-50%) rotate(60deg)}
+.blade:nth-child(3){transform:translateY(-50%) rotate(120deg)}
+.blade:nth-child(4){transform:translateY(-50%) rotate(180deg)}
+.blade:nth-child(5){transform:translateY(-50%) rotate(240deg)}
+.blade:nth-child(6){transform:translateY(-50%) rotate(300deg)}
+.blade-shine{position:absolute;top:2px;left:4px;right:4px;height:4px;background:rgba(255,255,255,.35);border-radius:4px}
+.hub{position:absolute;top:50%;left:50%;width:20px;height:20px;border-radius:50%;background:#e2e8f0;transform:translate(-50%,-50%);border:2px solid #94a3b8;z-index:2}
+@keyframes spinBlade{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* Shaft between turbine and generator */
+.shaft{width:30px;height:10px;background:linear-gradient(180deg,#475569,#334155);border-radius:5px;flex-shrink:0;margin:0 -3px;position:relative;top:0}
+
+/* Generator box */
+.generator-wrap{flex-shrink:0;width:120px;display:flex;flex-direction:column;align-items:center}
+.gen-label-top{font-size:.7rem;font-weight:700;color:#0c4a6e;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em;text-align:center}
+.gen-box{width:110px;background:#1e293b;border-radius:14px;border:2px solid #334155;padding:1rem;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25);position:relative}
+.gen-icon{font-size:2rem;line-height:1}
+.gen-title{font-size:.75rem;font-weight:700;color:#e2e8f0;margin-top:.4rem}
+.gen-sub{font-size:.65rem;color:#64748b;margin-top:.2rem}
+/* power glow ring */
+.gen-box::after{content:'';position:absolute;inset:-4px;border-radius:18px;border:2px solid var(--yellow);opacity:0;animation:genGlow 1.5s ease-in-out infinite}
+@keyframes genGlow{0%,100%{opacity:0;box-shadow:none}50%{opacity:.6;box-shadow:0 0 18px rgba(251,191,36,.4)}}
+
+/* Power lightning output */
+.power-out{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:.5rem}
+.lightning-line{width:3px;height:30px;background:linear-gradient(180deg,#fbbf24,#f59e0b);border-radius:3px;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4;transform:scaleY(.8)}50%{opacity:1;transform:scaleY(1)}}
+.bulb{font-size:1.6rem;animation:bulbBlink 1s ease-in-out infinite}
+@keyframes bulbBlink{0%,100%{filter:brightness(.6)}50%{filter:brightness(1.4) drop-shadow(0 0 8px #fbbf24)}}
+
+/* Head arrow */
+.head-arrow{position:absolute;left:30px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
+.arrow-line{width:2px;background:rgba(3,105,161,.5);flex:1;min-height:20px}
+.arrow-tip{border-left:6px solid transparent;border-right:6px solid transparent}
+.arrow-tip.down{border-top:8px solid rgba(3,105,161,.7)}
+.arrow-tip.up{border-bottom:8px solid rgba(3,105,161,.7)}
+.head-text{font-size:.65rem;font-weight:700;color:#0369a1;writing-mode:horizontal-tb;margin:0 4px;white-space:nowrap}
+
+/* Bottom info bar */
+.info-bar{background:rgba(255,255,255,.5);border-radius:12px;padding:.85rem 1.2rem;font-size:.82rem;color:#0c4a6e;line-height:1.6;backdrop-filter:blur(4px);margin-top:.5rem}
+
+/* Head indicator on reservoir side */
+.head-indicator{position:absolute;left:-34px;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.hi-line{width:2px;flex:1;background:rgba(3,105,161,.35);border-radius:1px}
+.hi-val{font-size:.65rem;font-weight:700;color:#0369a1;writing-mode:vertical-lr;transform:rotate(180deg);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<h1>Estimator Daya Listrik Turbin Air</h1>
+<p class="subtitle">Masukkan debit air, head turbin, dan efisiensi untuk melihat estimasi daya serta animasi sistem PLTA sederhana.</p>
+
+<div class="app">
+  <!-- LEFT: Controls -->
+  <div class="panel">
+    <div class="field">
+      <div class="field-label">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+        Debit Air, Q (m³/s)
+      </div>
+      <input type="number" id="q-input" value="2" min="0.1" max="500" step="0.1">
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12l4-4 4 4"/></svg>
+        Head Turbin, H (meter)
+      </div>
+      <input type="number" id="h-input" value="10" min="1" max="1000" step="1">
+    </div>
+
+    <div class="field slider-field">
+      <div class="field-label">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Efisiensi Turbin (%)
+      </div>
+      <input type="range" id="eff-slider" min="50" max="95" step="1" value="80">
+      <div class="eff-row" id="eff-display">80%</div>
+    </div>
+
+    <div class="result-box">
+      <div class="rlabel">Estimasi daya listrik</div>
+      <div class="rpower" id="result-kw">156.96 kW</div>
+      <div class="rwatt" id="result-w">156,960 watt</div>
+    </div>
+
+    <div class="extra-info">
+      <div class="info-chip">
+        <div class="iv" id="chip-kwh">3,767</div>
+        <div class="il">kWh / hari</div>
+      </div>
+      <div class="info-chip">
+        <div class="iv" id="chip-house">157</div>
+        <div class="il">rumah terlayani</div>
+      </div>
+      <div class="info-chip">
+        <div class="iv" id="chip-co2">0.9 ton</div>
+        <div class="il">CO₂ / hari dihemat</div>
+      </div>
+      <div class="info-chip">
+        <div class="iv" id="chip-kwhy">1.37 GWh</div>
+        <div class="il">energi / tahun</div>
+      </div>
+    </div>
+
+    <div class="class-badge" id="class-badge"></div>
+  </div>
+
+  <!-- RIGHT: Scene -->
+  <div class="scene">
+    <!-- Deco clouds -->
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+
+    <div class="diagram" id="diagram">
+      <!-- Reservoir -->
+      <div class="reservoir" style="position:relative">
+        <div class="res-label">Reservoir</div>
+        <div class="res-body">
+          <div class="res-back"></div>
+          <div class="res-water" id="res-water">
+            <div class="res-wave"></div>
+          </div>
+          <div class="res-shine"></div>
+        </div>
+        <!-- Head indicator -->
+        <div class="head-indicator">
+          <div class="arrow-tip up"></div>
+          <div class="hi-line"></div>
+          <div class="hi-val" id="head-val">H = 10 m</div>
+          <div class="hi-line"></div>
+          <div class="arrow-tip down"></div>
+        </div>
+      </div>
+
+      <!-- Penstock -->
+      <div class="penstock-wrap">
+        <div class="pipe-outer">
+          <div class="pipe-inner"></div>
+          <div class="bubble" id="b1"></div>
+          <div class="bubble" id="b2"></div>
+          <div class="bubble" id="b3"></div>
+        </div>
+      </div>
+
+      <!-- Turbine -->
+      <div class="turbine-wrap">
+        <div class="turbine-circle">
+          <div class="blades" id="blades">
+            <div class="blade"><div class="blade-shine"></div></div>
+            <div class="blade"><div class="blade-shine"></div></div>
+            <div class="blade"><div class="blade-shine"></div></div>
+            <div class="blade"><div class="blade-shine"></div></div>
+            <div class="blade"><div class="blade-shine"></div></div>
+            <div class="blade"><div class="blade-shine"></div></div>
+          </div>
+          <div class="hub"></div>
+        </div>
+        <div class="turb-label">Turbin</div>
+      </div>
+
+      <!-- Shaft -->
+      <div class="shaft"></div>
+
+      <!-- Generator -->
+      <div class="generator-wrap">
+        <div class="gen-label-top">Generator</div>
+        <div class="gen-box">
+          <div class="gen-icon">⚡</div>
+          <div class="gen-title">Generator</div>
+          <div class="gen-sub">menghasilkan listrik</div>
+        </div>
+        <div class="power-out">
+          <div class="lightning-line"></div>
+          <div class="bulb">💡</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-bar">
+      <strong>Rumus:</strong> P = ρ × g × Q × H × η &nbsp;|&nbsp; ρ=1000 kg/m³, g=9.81 m/s²<br>
+      Semakin besar debit, head, dan efisiensi, semakin cepat turbin berputar dan semakin besar daya listrik.
+    </div>
+  </div>
+</div>
+
+<script>
+const rho=1000,g=9.81;
+
+function calcKW(Q,H,eff){return rho*g*Q*H*(eff/100)/1000}
+
+function formatPower(kw){
+  if(kw>=1000000)return{val:(kw/1000000).toFixed(2),unit:'GW'};
+  if(kw>=1000)return{val:(kw/1000).toFixed(2),unit:'MW'};
+  return{val:kw.toFixed(2),unit:'kW'};
+}
+
+function classify(kw){
+  if(kw<100)return{label:'🟢 Mikro Hidro (<100 kW)',bg:'#dcfce7',color:'#15803d'};
+  if(kw<1000)return{label:'🔵 Mini Hidro (100 kW – 1 MW)',bg:'#dbeafe',color:'#1d4ed8'};
+  if(kw<10000)return{label:'🟣 PLTA Kecil (1 – 10 MW)',bg:'#ede9fe',color:'#6d28d9'};
+  return{label:'🟡 PLTA Besar (>10 MW)',bg:'#fef9c3',color:'#92400e'};
+}
+
+function update(){
+  const Q=parseFloat(document.getElementById('q-input').value)||0;
+  const H=parseFloat(document.getElementById('h-input').value)||0;
+  const eff=parseFloat(document.getElementById('eff-slider').value);
+
+  document.getElementById('eff-display').textContent=eff+'%';
+
+  const kw=calcKW(Q,H,eff);
+  const fmt=formatPower(kw);
+
+  document.getElementById('result-kw').textContent=fmt.val+' '+fmt.unit;
+  document.getElementById('result-w').textContent=Math.round(kw*1000).toLocaleString('id-ID')+' watt';
+  document.getElementById('chip-kwh').textContent=Math.round(kw*24).toLocaleString('id-ID');
+  document.getElementById('chip-house').textContent=Math.round(kw).toLocaleString('id-ID');
+  document.getElementById('chip-co2').textContent=(kw*24*0.0006).toFixed(1)+' ton';
+  const yr=kw*8760;
+  document.getElementById('chip-kwhy').textContent=yr>=1000000?(yr/1000000).toFixed(2)+' GWh':yr>=1000?(yr/1000).toFixed(1)+' MWh':Math.round(yr)+' kWh';
+
+  const cls=classify(kw);
+  const badge=document.getElementById('class-badge');
+  badge.textContent=cls.label;
+  badge.style.background=cls.bg;
+  badge.style.color=cls.color;
+  badge.style.border='1px solid '+cls.color+'44';
+
+  // Animation speed — map kw to speed
+  const maxKW=50000;
+  const ratio=Math.min(kw/maxKW,1);
+  // spin: 0.3s (fast) to 8s (slow), inverse of power
+  const spinSec=Math.max(0.3, 8-(ratio*7.7));
+  // flow bubbles speed
+  const flowSec=Math.max(0.4, 3-(ratio*2.6));
+
+  document.getElementById('blades').style.animationDuration=spinSec.toFixed(2)+'s';
+  ['b1','b2','b3'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.style.setProperty('--spd',flowSec.toFixed(2)+'s');
+  });
+
+  // reservoir water level based on Q (visual only)
+  const wlv=Math.min(90,Math.max(30, 30+Q*1.2));
+  document.getElementById('res-water').style.height=wlv+'%';
+
+  // head indicator
+  document.getElementById('head-val').textContent='H = '+H+' m';
+}
+
+['q-input','h-input'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+document.getElementById('eff-slider').addEventListener('input',update);
+update();
+</script>
+</body>
+</html>
